@@ -1,6 +1,6 @@
 ![claudeweather demo placeholder](./assets/demo-placeholder.svg)
 
-[English](./README.md) | [简体中文](./README-zh-CN.md) | [繁體中文](./README-zh-TW.md) | [日本語](./README-ja.md) | [한국어](./README-ko.md) | [Français](./README-fr.md) | [Русский](./README-ru.md) | [Español](./README-es.md) | [العربية](./README-ar.md)
+[English](./README.md) | [한국어](./README-ko.md)
 
 # claudeweather
 
@@ -34,18 +34,71 @@ It renders a terminal scene that can be used in:
 
 ## Quick Start
 
-```bash
-pnpm install
-printf '%s' '{"weather":{"condition":"rain","is_daytime":true},"width":95,"height":17,"seed":7,"panel":{"title":"Claude Code v2.1.73","welcome":"Welcome back Seunghyun!","cwd":"~/Documents/etl_sync"}}' | pnpm start
-```
-
-This prints a text-mode screen preview directly to stdout.
-
-## CLI Input
+One-off preview:
 
 ```bash
-echo '{"weather":{"condition":"snow","is_daytime":false},"seed":3}' | node src/cli.js
+npx claudeweather preview
 ```
+
+Persistent shell integration:
+
+```bash
+npm install -g claudeweather
+claudeweather install
+```
+
+After reloading the shell, `claude` will show the preview first and then hand off to the real Claude Code command.
+
+## Commands
+
+```bash
+claudeweather preview
+claudeweather install
+claudeweather uninstall
+claudeweather doctor
+```
+
+## Preview Input
+
+`preview` loads `~/.claudeweather/config.json` when present.
+You can also override parts of the scene through stdin JSON.
+
+```bash
+printf '%s' '{"weather":{"condition":"rain","is_daytime":true},"seed":7,"panel":{"title":"Claude Code v2.1.73","welcome":"Welcome back Seunghyun!","cwd":"~/Documents/etl_sync"}}' | claudeweather preview
+```
+
+## Install Flow
+
+`claudeweather install` creates:
+
+- `~/.claudeweather/config.json`
+- `~/.claudeweather/claude-shell.sh`
+- a managed source block in `~/.zshrc` or `~/.bashrc`
+
+The shell hook wraps `claude`, runs the weather preview, and then executes the original `claude` command with `command claude "$@"`.
+
+## Doctor
+
+```bash
+claudeweather doctor
+```
+
+This checks whether:
+
+- the config file exists
+- the shell hook exists
+- the rc file contains the managed block
+- `claude` is currently available in `PATH`
+
+## Uninstall
+
+```bash
+claudeweather uninstall
+claudeweather uninstall --purge
+```
+
+`uninstall` removes the shell integration block and hook file.
+`--purge` also removes `~/.claudeweather`.
 
 ## Programmatic Usage
 
@@ -100,14 +153,6 @@ console.log(result.lines.join("\n"));
 - `mapSkyLabel(condition, isDaytime)`
 - `createWeatherBackdrop(options)`
 - `renderClaudeWeatherScreen(options)`
-
-## Publish
-
-This package is configured for public npm publishing.
-
-```bash
-pnpm publish --access public
-```
 
 ## Development
 

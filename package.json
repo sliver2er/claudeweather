@@ -17,7 +17,6 @@
   "files": [
     "src",
     "README.md",
-    "README-*.md",
     "README-ko.md",
     "LICENSE"
   ],
