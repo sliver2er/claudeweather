@@ -1,7 +1,7 @@
 {
   "name": "claudeweather",
   "version": "0.1.0",
-  "description": "Short weather-themed welcome lines for terminal-based developer tools.",
+  "description": "Weather-themed welcome lines for terminal-based developer tools.",
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -14,13 +14,36 @@
     "start": "node ./src/cli.js",
     "test": "node --test"
   },
+  "files": [
+    "src",
+    "README.md",
+    "README-ko.md",
+    "LICENSE"
+  ],
   "keywords": [
     "weather",
     "terminal",
     "welcome",
+    "cli",
+    "developer-tools",
+    "dashboard",
     "json"
   ],
   "author": "Wooseunghyun",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sliver2er/claudeweather.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sliver2er/claudeweather/issues"
+  },
+  "homepage": "https://github.com/sliver2er/claudeweather#readme",
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "packageManager": "pnpm@10.27.0"
 }

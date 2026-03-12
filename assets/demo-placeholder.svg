@@ -1,0 +1,13 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" fill="#09111F"/>
+  <rect x="58" y="58" width="1164" height="604" rx="24" fill="#0F172A" stroke="#334155" stroke-width="2"/>
+  <circle cx="102" cy="101" r="10" fill="#F97316"/>
+  <circle cx="136" cy="101" r="10" fill="#FACC15"/>
+  <circle cx="170" cy="101" r="10" fill="#22C55E"/>
+  <text x="210" y="108" fill="#94A3B8" font-family="Menlo, Monaco, Consolas, monospace" font-size="24">claudeweather demo slot</text>
+  <text x="98" y="188" fill="#E2E8F0" font-family="Menlo, Monaco, Consolas, monospace" font-size="34">Seoul, Partly cloudy daylight.</text>
+  <text x="98" y="242" fill="#7DD3FC" font-family="Menlo, Monaco, Consolas, monospace" font-size="28">Temp 23°C, Feels like 25°C, Humidity 58%.</text>
+  <text x="98" y="296" fill="#CBD5E1" font-family="Menlo, Monaco, Consolas, monospace" font-size="28">A calm pace under a moving sky.</text>
+  <text x="98" y="398" fill="#94A3B8" font-family="Menlo, Monaco, Consolas, monospace" font-size="24">Recommended replacement: assets/demo.gif</text>
+  <text x="98" y="442" fill="#64748B" font-family="Menlo, Monaco, Consolas, monospace" font-size="22">Record a short terminal capture and keep the same path.</text>
+</svg>
