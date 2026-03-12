@@ -1,7 +1,7 @@
 {
   "name": "claudeweather",
   "version": "0.1.0",
-  "description": "Weather-themed welcome lines for terminal-based developer tools.",
+  "description": "Weather backdrop renderer for Claude Code-style terminal welcome screens.",
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -17,16 +17,19 @@
   "files": [
     "src",
     "README.md",
+    "README-*.md",
     "README-ko.md",
     "LICENSE"
   ],
   "keywords": [
     "weather",
     "terminal",
-    "welcome",
+    "claude-code",
+    "welcome-screen",
     "cli",
     "developer-tools",
     "dashboard",
+    "tui",
     "json"
   ],
   "author": "Wooseunghyun",

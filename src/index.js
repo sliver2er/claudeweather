@@ -1,53 +1,72 @@
-const FALLBACK_LINE = "Quiet sky, weather details are still unavailable.";
-const TEMPERATURE_RANGE = { min: -60, max: 60 };
-const HUMIDITY_RANGE = { min: 0, max: 100 };
-const DAY_PERIOD = "day";
-const NIGHT_PERIOD = "night";
+const DEFAULT_WIDTH = 95;
+const DEFAULT_HEIGHT = 17;
+const MIN_WIDTH = 56;
+const MIN_HEIGHT = 13;
 
-const SKY_SCENES = {
+const BACKGROUND_THEMES = {
   sunny: {
-    day: "Sunny daylight.",
-    night: "Clear night air."
+    base: " ",
+    particles: [
+      { char: ".", probability: 0.014 },
+      { char: "·", probability: 0.018 },
+      { char: "✦", probability: 0.0025 }
+    ]
   },
   "partly cloudy": {
-    day: "Partly cloudy daylight.",
-    night: "Partly cloudy evening."
+    base: " ",
+    particles: [
+      { char: ".", probability: 0.014 },
+      { char: "·", probability: 0.02 },
+      { char: "~", probability: 0.01 }
+    ]
   },
   cloudy: {
-    day: "Cloudy daylight.",
-    night: "Cloudy evening."
+    base: " ",
+    particles: [
+      { char: ".", probability: 0.012 },
+      { char: "░", probability: 0.02 },
+      { char: "~", probability: 0.01 }
+    ]
   },
   rainy: {
-    day: "Rainy daylight.",
-    night: "Rainy evening."
+    base: " ",
+    particles: [
+      { char: "╲", probability: 0.026 },
+      { char: ".", probability: 0.015 },
+      { char: "'", probability: 0.012 }
+    ]
   },
   snowy: {
-    day: "Snowy daylight.",
-    night: "Snowy evening."
+    base: " ",
+    particles: [
+      { char: "*", probability: 0.024 },
+      { char: "·", probability: 0.02 },
+      { char: "•", probability: 0.01 }
+    ]
   },
   stormy: {
-    day: "Stormy daylight.",
-    night: "Stormy evening."
+    base: " ",
+    particles: [
+      { char: "╲", probability: 0.024 },
+      { char: "'", probability: 0.016 },
+      { char: "⚡", probability: 0.002 }
+    ]
   },
   foggy: {
-    day: "Foggy daylight.",
-    night: "Foggy evening."
+    base: " ",
+    particles: [
+      { char: "░", probability: 0.05 },
+      { char: "▒", probability: 0.014 },
+      { char: ".", probability: 0.012 }
+    ]
   },
   unknown: {
-    day: "Quiet sky.",
-    night: "Quiet night sky."
+    base: " ",
+    particles: [
+      { char: ".", probability: 0.012 },
+      { char: "·", probability: 0.01 }
+    ]
   }
-};
-
-const MOOD_LINES = {
-  sunny: "Light air, steady focus.",
-  "partly cloudy": "A calm pace under a moving sky.",
-  cloudy: "Soft light, settled air.",
-  rainy: "Damp air, low rhythm.",
-  snowy: "Cold air, quiet motion.",
-  stormy: "Heavy sky, brief concentration.",
-  foggy: "Muted edges, calm atmosphere.",
-  unknown: "A quiet start beneath an open sky."
 };
 
 const CONDITION_RULES = [
@@ -69,54 +88,12 @@ const CONDITION_RULES = [
   { label: "sunny", keywords: ["clear", "sun"] }
 ];
 
-const STAT_FIELDS = [
-  {
-    value: (weather) => weather?.temp_c,
-    isValid: isValidTemperature,
-    format: (value) => formatTemperature("Temp", value)
-  },
-  {
-    value: (weather) => weather?.feels_like_c,
-    isValid: isValidTemperature,
-    format: (value) => formatTemperature("Feels like", value)
-  },
-  {
-    value: (weather) => weather?.humidity,
-    isValid: isValidHumidity,
-    format: (value) => `Humidity ${Math.round(value)}%`
-  }
-];
-
-function isFiniteNumber(value) {
-  return typeof value === "number" && Number.isFinite(value);
-}
-
-function isValidTemperature(value) {
-  return (
-    isFiniteNumber(value) &&
-    value >= TEMPERATURE_RANGE.min &&
-    value <= TEMPERATURE_RANGE.max
-  );
-}
-
-function isValidHumidity(value) {
-  return (
-    isFiniteNumber(value) &&
-    value >= HUMIDITY_RANGE.min &&
-    value <= HUMIDITY_RANGE.max
-  );
-}
-
-function formatTemperature(label, value) {
-  return `${label} ${Math.round(value)}°C`;
-}
-
-function normalizeCity(value) {
-  if (typeof value !== "string") {
-    return "";
+function clampInteger(value, fallback, minimum) {
+  if (!Number.isFinite(value)) {
+    return fallback;
   }
 
-  return value.trim();
+  return Math.max(minimum, Math.floor(value));
 }
 
 function normalizeCondition(condition) {
@@ -131,7 +108,148 @@ function includesAnyKeyword(condition, keywords) {
   return keywords.some((keyword) => condition.includes(keyword));
 }
 
-function mapSkyLabel(condition, isDaytime) {
+function createSeededRandom(seed = 1) {
+  let state = (Math.abs(Math.trunc(seed)) || 1) >>> 0;
+
+  return () => {
+    state = (1664525 * state + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+}
+
+function createGrid(width, height, fill = " ") {
+  return Array.from({ length: height }, () => Array(width).fill(fill));
+}
+
+function writeText(grid, x, y, text) {
+  if (!grid[y]) {
+    return;
+  }
+
+  for (let index = 0; index < text.length; index += 1) {
+    const targetX = x + index;
+
+    if (targetX < 0 || targetX >= grid[y].length) {
+      continue;
+    }
+
+    grid[y][targetX] = text[index];
+  }
+}
+
+function drawBox(grid, x, y, width, height, title) {
+  const right = x + width - 1;
+  const bottom = y + height - 1;
+  const safeTitle = title ? ` ${title} ` : "";
+  const topLine = `╭${"─".repeat(Math.max(0, width - 2))}╮`;
+  const bottomLine = `╰${"─".repeat(Math.max(0, width - 2))}╯`;
+
+  writeText(grid, x, y, topLine);
+  writeText(grid, x, bottom, bottomLine);
+
+  if (safeTitle && width > safeTitle.length + 4) {
+    writeText(grid, x + 2, y, safeTitle);
+  }
+
+  for (let row = y + 1; row < bottom; row += 1) {
+    if (!grid[row]) {
+      continue;
+    }
+
+    grid[row][x] = "│";
+    grid[row][right] = "│";
+  }
+}
+
+function padLine(value, width, align = "left") {
+  const text = String(value ?? "");
+
+  if (text.length >= width) {
+    return text.slice(0, width);
+  }
+
+  if (align === "center") {
+    const left = Math.floor((width - text.length) / 2);
+    const right = width - text.length - left;
+    return `${" ".repeat(left)}${text}${" ".repeat(right)}`;
+  }
+
+  return text.padEnd(width, " ");
+}
+
+function toColumnLine(left, right, leftWidth, rightWidth) {
+  return `${padLine(left, leftWidth)} ${padLine(right, rightWidth)}`;
+}
+
+function buildClaudePanelContent(panel = {}, innerWidth) {
+  const leftWidth = Math.max(28, Math.floor(innerWidth * 0.58));
+  const rightWidth = Math.max(18, innerWidth - leftWidth - 1);
+  const welcome = panel.welcome ?? "Welcome back!";
+  const tipTitle = panel.tipTitle ?? "Tips for getting started";
+  const tipBody = panel.tipBody ?? "Run /init to create a CLAUDE.md";
+  const recentTitle = panel.recentTitle ?? "Recent activity";
+  const recentBody = panel.recentBody ?? "No recent activity";
+  const modelLine =
+    panel.modelLine ?? "Sonnet 4.6 · Claude Pro · shpaul2001@gmail.com's";
+  const orgLine = panel.orgLine ?? "Organization";
+  const cwd = panel.cwd ?? "~/Documents/etl_sync";
+
+  return [
+    toColumnLine("", tipTitle, leftWidth, rightWidth),
+    toColumnLine(padLine(welcome, leftWidth, "center"), tipBody, leftWidth, rightWidth),
+    toColumnLine("", "────────────────────", leftWidth, rightWidth),
+    toColumnLine(padLine("▐▛███▜▌", leftWidth, "center"), recentTitle, leftWidth, rightWidth),
+    toColumnLine(padLine("▝▜█████▛▘", leftWidth, "center"), recentBody, leftWidth, rightWidth),
+    toColumnLine(padLine("▘▘ ▝▝", leftWidth, "center"), "", leftWidth, rightWidth),
+    padLine(modelLine, innerWidth),
+    padLine(orgLine, innerWidth),
+    padLine(cwd, innerWidth, "center")
+  ];
+}
+
+function overlayPanel(grid, options = {}) {
+  const width = grid[0].length;
+  const height = grid.length;
+  const panelWidth = Math.min(width - 4, options.width ?? width - 6);
+  const panelHeight = Math.min(height - 2, options.height ?? 11);
+  const panelX = Math.max(1, Math.floor((width - panelWidth) / 2));
+  const panelY = Math.max(1, Math.floor((height - panelHeight) / 2));
+  const title = options.title ?? "Claude Code Weather Preview";
+  const innerWidth = panelWidth - 2;
+  const innerHeight = panelHeight - 2;
+  const contentLines = buildClaudePanelContent(options, innerWidth).slice(
+    0,
+    innerHeight
+  );
+
+  drawBox(grid, panelX, panelY, panelWidth, panelHeight, title);
+
+  for (let index = 0; index < contentLines.length; index += 1) {
+    writeText(grid, panelX + 1, panelY + 1 + index, contentLines[index]);
+  }
+}
+
+function decorateBackground(grid, label, seed) {
+  const width = grid[0].length;
+  const height = grid.length;
+  const theme = BACKGROUND_THEMES[label] ?? BACKGROUND_THEMES.unknown;
+  const random = createSeededRandom(seed);
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      grid[y][x] = theme.base;
+
+      for (const particle of theme.particles) {
+        if (random() < particle.probability) {
+          grid[y][x] = particle.char;
+          break;
+        }
+      }
+    }
+  }
+}
+
+export function mapSkyLabel(condition, isDaytime) {
   const normalized = normalizeCondition(condition);
 
   if (!normalized) {
@@ -148,61 +266,37 @@ function mapSkyLabel(condition, isDaytime) {
   return matchedRule?.label ?? "unknown";
 }
 
-function getPeriod(isDaytime) {
-  return isDaytime ? DAY_PERIOD : NIGHT_PERIOD;
-}
-
-function buildSkyLine(city, label, isDaytime) {
-  const period = getPeriod(isDaytime);
-  const scene = SKY_SCENES[label]?.[period] ?? SKY_SCENES.unknown[period];
-
-  return city ? `${city}, ${scene}` : scene;
-}
-
-function collectStats(weather) {
-  return STAT_FIELDS.flatMap((field) => {
-    const value = field.value(weather);
-
-    return field.isValid(value) ? [field.format(value)] : [];
-  });
-}
-
-function buildStatsLine(weather) {
-  const stats = collectStats(weather);
-
-  if (stats.length === 0) {
-    return null;
-  }
-
-  return `${stats.join(", ")}.`;
-}
-
-function hasUsableWeatherSignal(weather, skyLabel) {
-  return (
-    skyLabel !== "unknown" ||
-    isValidTemperature(weather?.temp_c) ||
-    isValidTemperature(weather?.feels_like_c) ||
-    isValidHumidity(weather?.humidity)
-  );
-}
-
-export function generateWelcomeScreen(input = {}) {
-  const weather = input?.weather ?? {};
+export function createWeatherBackdrop(options = {}) {
+  const weather = options.weather ?? {};
+  const width = clampInteger(options.width, DEFAULT_WIDTH, MIN_WIDTH);
+  const height = clampInteger(options.height, DEFAULT_HEIGHT, MIN_HEIGHT);
+  const seed = clampInteger(options.seed, 1, 1);
   const isDaytime = weather?.is_daytime !== false;
-  const city = normalizeCity(input?.current_city);
-  const skyLabel = mapSkyLabel(weather?.condition, isDaytime);
+  const label = mapSkyLabel(weather?.condition, isDaytime);
+  const grid = createGrid(width, height);
 
-  if (!hasUsableWeatherSignal(weather, skyLabel)) {
-    return { lines: [FALLBACK_LINE] };
-  }
+  decorateBackground(grid, label, seed);
 
-  const lines = [
-    buildSkyLine(city, skyLabel, isDaytime),
-    buildStatsLine(weather),
-    MOOD_LINES[skyLabel] ?? MOOD_LINES.unknown
-  ].filter(Boolean);
-
-  return { lines: lines.slice(0, 6) };
+  return {
+    skyLabel: label,
+    lines: grid.map((line) => line.join(""))
+  };
 }
 
-export { FALLBACK_LINE, mapSkyLabel };
+export function renderClaudeWeatherScreen(options = {}) {
+  const weather = options.weather ?? {};
+  const backdrop = createWeatherBackdrop(options);
+  const grid = backdrop.lines.map((line) => [...line]);
+
+  overlayPanel(grid, options.panel);
+
+  return {
+    skyLabel: backdrop.skyLabel,
+    lines: grid.map((line) => line.join("")),
+    meta: {
+      width: clampInteger(options.width, DEFAULT_WIDTH, MIN_WIDTH),
+      height: clampInteger(options.height, DEFAULT_HEIGHT, MIN_HEIGHT),
+      condition: normalizeCondition(weather?.condition) || "unknown"
+    }
+  };
+}

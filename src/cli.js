@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { generateWelcomeScreen } from "./index.js";
+import { renderClaudeWeatherScreen } from "./index.js";
 
 async function readStdin() {
   const chunks = [];
@@ -15,22 +15,13 @@ async function readStdin() {
 async function main() {
   const raw = await readStdin();
 
-  if (!raw) {
-    process.stdout.write(
-      `${JSON.stringify(generateWelcomeScreen({}), null, 2)}\n`
-    );
-    return;
-  }
-
   try {
-    const input = JSON.parse(raw);
-    process.stdout.write(
-      `${JSON.stringify(generateWelcomeScreen(input), null, 2)}\n`
-    );
+    const input = raw ? JSON.parse(raw) : {};
+    const result = renderClaudeWeatherScreen(input);
+    process.stdout.write(`${result.lines.join("\n")}\n`);
   } catch {
-    process.stdout.write(
-      `${JSON.stringify(generateWelcomeScreen({}), null, 2)}\n`
-    );
+    const fallback = renderClaudeWeatherScreen({});
+    process.stdout.write(`${fallback.lines.join("\n")}\n`);
   }
 }
 
