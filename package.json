@@ -1,0 +1,26 @@
+{
+  "name": "claudeweather",
+  "version": "0.1.0",
+  "description": "Short weather-themed welcome lines for terminal-based developer tools.",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "bin": {
+    "claudeweather": "./src/cli.js"
+  },
+  "scripts": {
+    "start": "node ./src/cli.js",
+    "test": "node --test"
+  },
+  "keywords": [
+    "weather",
+    "terminal",
+    "welcome",
+    "json"
+  ],
+  "author": "Wooseunghyun",
+  "license": "MIT",
+  "packageManager": "pnpm@10.27.0"
+}
